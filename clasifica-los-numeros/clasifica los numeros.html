@@ -1,1 +1,68 @@
-
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Clasifica los números</title>
+<style>
+:root{--bg:#f6f8fc;--card:#fff;--text:#172033;--muted:#667085;--border:#e5e9f0;--blue:#536dfe;--green:#22a06b;--red:#e05252;--gray:#7a8496}
+*{box-sizing:border-box} body{margin:0;min-height:100vh;padding:22px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:linear-gradient(145deg,#f8fbff,#f3f5fb);color:var(--text)}
+.app{width:min(900px,100%);margin:auto}.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px}.brand{font-size:13px;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--blue)}.score{background:#fff;border:1px solid var(--border);border-radius:999px;padding:9px 14px;font-weight:850}
+.card{background:var(--card);border:1px solid var(--border);border-radius:28px;padding:28px;box-shadow:0 18px 50px rgba(31,41,55,.1)}.top{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;font-weight:750}.progress{height:8px;background:#edf0f5;border-radius:99px;overflow:hidden;margin:12px 0 25px}.bar{height:100%;width:0;background:var(--blue);transition:width .3s}
+h1{font-size:clamp(29px,5vw,42px);margin:0 0 8px;letter-spacing:-.03em}.intro{color:var(--muted);margin:0 0 22px;line-height:1.5}
+.number-zone{display:flex;justify-content:center;align-items:center;min-height:125px;background:#f8f9fc;border:2px dashed #dfe4ed;border-radius:22px;margin-bottom:22px}.number{width:105px;height:78px;border-radius:18px;background:#fff;border:2px solid #dfe4ed;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;cursor:grab;box-shadow:0 8px 20px rgba(31,41,55,.08);user-select:none;touch-action:none}.number.dragging{opacity:.45;transform:scale(1.06)}.columns{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.column{border-radius:20px;padding:12px;min-height:185px;border:2px solid var(--border);transition:.18s}.column.positive{background:#f1fbf6;border-color:#c8ead8}.column.zero{background:#f5f6f8;border-color:#dfe2e7}.column.negative{background:#fff3f3;border-color:#f2cdcd}.column.over{transform:translateY(-3px);box-shadow:0 10px 25px rgba(31,41,55,.08)}.column h2{text-align:center;font-size:16px;margin:3px 0 12px}.dropzone{min-height:118px;display:flex;flex-direction:column;align-items:center;gap:7px}.placed{width:92px;height:55px;font-size:22px;cursor:default;box-shadow:none}
+.feedback{display:none;margin-top:18px;padding:16px 18px;border-radius:17px;line-height:1.5}.feedback.show{display:block}.feedback.correct{background:#eefaf4;border:1px solid #b9e6cf}.feedback.incorrect{background:#fff2f2;border:1px solid #f0c2c2}.feedback strong{display:block;margin-bottom:4px}.next{display:block;margin:18px 0 0 auto;background:var(--blue);color:#fff;border:0;border-radius:14px;padding:13px 21px;font:inherit;font-weight:850;cursor:pointer}.next:disabled{opacity:.45;cursor:not-allowed}
+.results{display:none;text-align:center;padding:15px}.results.show{display:block}.emoji{font-size:58px}.results h2{font-size:34px;margin:8px 0}.final{font-size:22px;font-weight:900}.message{color:var(--muted);margin:8px 0 22px}.restart{background:var(--blue);color:#fff;border:0;border-radius:14px;padding:14px 23px;font:inherit;font-weight:850;cursor:pointer}.tip{text-align:center;color:var(--muted);font-size:12px;margin-top:14px}
+@media(max-width:620px){body{padding:12px}.card{padding:20px;border-radius:22px}.columns{grid-template-columns:1fr}.column{min-height:130px}.dropzone{min-height:70px;flex-direction:row;flex-wrap:wrap;justify-content:center}.number-zone{min-height:110px}}
+</style>
+</head>
+<body>
+<main class="app">
+<div class="header"><div class="brand">Matemáticas · Números con signo</div><div class="score" id="score">⭐ 0 puntos</div></div>
+<section class="card">
+<div id="game">
+<div class="top"><span id="counter"></span><span id="percent">0%</span></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<h1>🎯 Clasifica los números</h1>
+<p class="intro">Arrastra el número hacia la columna correcta. En celular o tablet, también puedes <b>tocar el número y después tocar una columna</b>.</p>
+<div class="number-zone" id="numberZone"></div>
+<div class="columns">
+<div class="column positive" data-type="positive"><h2>🟢 Positivos</h2><div class="dropzone"></div></div>
+<div class="column zero" data-type="zero"><h2>⚪ Cero</h2><div class="dropzone"></div></div>
+<div class="column negative" data-type="negative"><h2>🔴 Negativos</h2><div class="dropzone"></div></div>
+</div>
+<div class="feedback" id="feedback"><strong id="feedbackTitle"></strong><span id="feedbackText"></span></div>
+<button class="next" id="next" disabled>Siguiente →</button>
+</div>
+<div class="results" id="results"><div class="emoji" id="resultEmoji">🏆</div><h2>¡Actividad terminada!</h2><div class="final" id="final"></div><p class="message" id="message"></p><button class="restart" id="restart">🔄 Volver a jugar</button></div>
+</section>
+<div class="tip">💡 Mayor que 0 → positivo · igual a 0 → cero · menor que 0 → negativo</div>
+</main>
+<script>
+const numbers=[
+["+8","positive","+8 es mayor que 0, por eso es positivo."],["−3","negative","−3 es menor que 0, por eso es negativo."],["0","zero","0 no es positivo ni negativo: pertenece a la categoría cero."],
+["+15","positive","+15 es mayor que 0, por eso es positivo."],["−12","negative","−12 es menor que 0, por eso es negativo."],["+2","positive","+2 es mayor que 0, por eso es positivo."],
+["−7","negative","−7 es menor que 0, por eso es negativo."],["0","zero","0 no es mayor ni menor que 0, por eso es cero."],
+["+21","positive","+21 es mayor que 0, por eso es positivo."],["−1","negative","−1 es menor que 0, por eso es negativo."],
+["+6","positive","+6 es mayor que 0, por eso es positivo."],["−18","negative","−18 es menor que 0, por eso es negativo."],
+["0","zero","0 representa que no hay un valor positivo ni negativo."],["+30","positive","+30 es mayor que 0, por eso es positivo."],["−25","negative","−25 es menor que 0, por eso es negativo."]
+];
+let index=0,score=0,selected=null,locked=false;
+const zone=document.getElementById("numberZone"),feedback=document.getElementById("feedback"),next=document.getElementById("next");
+function label(t){return t==="positive"?"🟢 Positivo":t==="negative"?"🔴 Negativo":"⚪ Cero"}
+function render(){
+selected=null;locked=false;const q=numbers[index];document.getElementById("counter").textContent=`Número ${index+1} de ${numbers.length}`;const pct=Math.round(index/numbers.length*100);document.getElementById("percent").textContent=pct+"%";document.getElementById("bar").style.width=pct+"%";zone.innerHTML="";document.querySelectorAll(".dropzone").forEach(z=>z.innerHTML="");feedback.className="feedback";next.disabled=true;
+const el=document.createElement("div");el.className="number";el.textContent=q[0];el.draggable=true;
+el.addEventListener("dragstart",()=>{selected=el;el.classList.add("dragging")});el.addEventListener("dragend",()=>el.classList.remove("dragging"));
+el.addEventListener("click",()=>{if(locked)return;document.querySelectorAll(".number").forEach(n=>n.classList.remove("dragging"));selected=el;el.classList.add("dragging")});zone.appendChild(el)
+}
+function classify(type){if(locked||!selected)return;locked=true;const q=numbers[index],correct=type===q[1];if(correct)score++;document.getElementById("score").textContent=`⭐ ${score} ${score===1?"punto":"puntos"}`;selected.classList.remove("dragging");selected.classList.add("placed");document.querySelector(`.column[data-type="${type}"] .dropzone`).appendChild(selected);
+feedback.className=`feedback show ${correct?"correct":"incorrect"}`;document.getElementById("feedbackTitle").textContent=correct?"✅ ¡Correcto!":"❌ Observa de nuevo.";document.getElementById("feedbackText").textContent=correct?q[2]:`La clasificación correcta es ${label(q[1])}. ${q[2]}`;next.disabled=false;document.getElementById("bar").style.width=Math.round((index+1)/numbers.length*100)+"%"}
+document.querySelectorAll(".column").forEach(col=>{col.addEventListener("dragover",e=>{e.preventDefault();col.classList.add("over")});col.addEventListener("dragleave",()=>col.classList.remove("over"));col.addEventListener("drop",e=>{e.preventDefault();col.classList.remove("over");classify(col.dataset.type)});col.addEventListener("click",()=>{if(selected)classify(col.dataset.type)})});
+next.addEventListener("click",()=>{if(index<numbers.length-1){index++;render()}else finish()});
+function finish(){document.getElementById("game").style.display="none";document.getElementById("results").classList.add("show");const pct=Math.round(score/numbers.length*100);document.getElementById("final").textContent=`${score} de ${numbers.length} correctos · ${pct}%`;let emoji,msg;if(pct===100){emoji="🏆";msg="¡Excelente! Clasificaste todos los números correctamente."}else if(pct>=80){emoji="🌟";msg="¡Muy bien! Ya distingues con seguridad los números con signo."}else if(pct>=60){emoji="💪";msg="Buen trabajo. Sigue practicando la relación entre el número y el 0."}else{emoji="🧩";msg="Vamos paso a paso: mayores que 0 son positivos, menores que 0 son negativos y 0 es cero."}document.getElementById("resultEmoji").textContent=emoji;document.getElementById("message").textContent=msg}
+document.getElementById("restart").addEventListener("click",()=>{index=0;score=0;document.getElementById("score").textContent="⭐ 0 puntos";document.getElementById("results").classList.remove("show");document.getElementById("game").style.display="block";render()});
+render();
+</script>
+</body>
+</html>
